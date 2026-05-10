@@ -25,6 +25,8 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated =>
       _user != null && _token != null && _token!.isNotEmpty;
 
+  bool get isAdmin => _user?.role == 'admin';
+
   Future<void> initialize() async {
     if (_isInitialized) {
       return;
@@ -110,6 +112,32 @@ class AuthProvider with ChangeNotifier {
       // Ignore remote logout error and still clear local session.
     } finally {
       await _clearSession();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> updateProfile({
+    required String name,
+    required String email,
+    String? avatarPath,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedUser = await _apiService.updateProfile(
+        name: name,
+        email: email,
+        avatarPath: avatarPath,
+      );
+      _user = updatedUser;
+      return true;
+    } catch (error) {
+      _errorMessage = error.toString();
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
     }

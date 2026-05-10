@@ -14,7 +14,7 @@ class SongController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Song::query();
+        $query = Song::query()->withCount('comments');
 
         if ($request->filled('q')) {
             $search = $request->string('q')->toString();
@@ -35,6 +35,7 @@ class SongController extends Controller
 
     public function show(Request $request, Song $song): JsonResponse
     {
+        $song->loadCount('comments');
         $likedSongIds = $request->user()->likedSongs()->pluck('songs.id')->all();
 
         return response()->json([
@@ -263,6 +264,7 @@ class SongController extends Controller
             'plays' => $song->plays,
             'likes' => $song->likes,
             'is_liked' => in_array($song->id, $likedSongIds, true),
+            'comments_count' => $song->comments_count ?? $song->comments()->count(),
             'created_at' => $song->created_at,
             'updated_at' => $song->updated_at,
         ];

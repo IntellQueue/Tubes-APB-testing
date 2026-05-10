@@ -135,6 +135,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
         content: content,
         parentId: _replyTo,
       );
+      if (mounted) {
+        context.read<MusicProvider>().incrementCommentCount(widget.song.id);
+      }
       _commentController.clear();
       _replyTo = null;
       _replyToName = null;
@@ -162,6 +165,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   Future<void> _deleteComment(SongComment comment) async {
     try {
       await context.read<ApiService>().deleteComment(comment.id);
+      if (mounted) {
+        context.read<MusicProvider>().decrementCommentCount(widget.song.id);
+      }
       setState(() {
         _commentsFuture = _loadComments();
       });
@@ -471,6 +477,14 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                           isPlaying: audio.isPlaying,
                         ),
                         const SizedBox(height: 16),
+                        if (isCurrent) ...[
+                          _SongSeeker(
+                            position: audio.position,
+                            duration: audio.duration,
+                            onSeek: (pos) => audio.seek(pos),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         _DetailActionDock(
                           isPlaying: isCurrent && audio.isPlaying,
                           isLiked: song.isLiked,
@@ -662,9 +676,9 @@ class _SongDetailHero extends StatelessWidget {
         child: Column(
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _LiveBadge(isPlaying: isCurrent && isPlaying),
-                const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -1042,31 +1056,35 @@ class _CommentComposer extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          TextField(
-            controller: controller,
-            focusNode: focusNode,
-            minLines: 1,
-            maxLines: 4,
-            textInputAction: TextInputAction.newline,
-            decoration: const InputDecoration(
-              hintText: 'Tulis komentar...',
-              prefixIcon: Icon(Icons.mode_comment_outlined),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: isPosting ? null : onSubmit,
-              icon: isPosting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send_rounded),
-              label: Text(isPosting ? 'Mengirim...' : 'Kirim'),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  minLines: 1,
+                  maxLines: 4,
+                  textInputAction: TextInputAction.newline,
+                  decoration: const InputDecoration(
+                    hintText: 'Tulis komentar...',
+                    prefixIcon: Icon(Icons.mode_comment_outlined),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: isPosting ? null : onSubmit,
+                icon: isPosting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send_rounded),
+                label: Text(isPosting ? 'Mengirim...' : 'Kirim'),
+              ),
+            ],
           ),
         ],
       ),
@@ -1243,3 +1261,67 @@ class _CommentCard extends StatelessWidget {
     return '$day/$month/${time.year}';
   }
 }
+
+class _SongSeeker extends StatelessWidget {
+  final Duration position;
+  final Duration duration;
+  final ValueChanged<Duration> onSeek;
+
+  const _SongSeeker({
+    required this.position,
+    required this.duration,
+    required this.onSeek,
+  });
+
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(1, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double maxVal = duration.inMilliseconds.toDouble();
+    final double currentVal = position.inMilliseconds.toDouble().clamp(0.0, maxVal);
+
+    return Column(
+      children: [
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+            activeTrackColor: AppColors.accentHot,
+            inactiveTrackColor: AppColors.line,
+            thumbColor: AppColors.accentHot,
+            overlayColor: AppColors.accentHot.withOpacity(0.12),
+          ),
+          child: Slider(
+            value: currentVal,
+            max: maxVal > 0 ? maxVal : 1.0,
+            onChanged: (val) {
+              onSeek(Duration(milliseconds: val.toInt()));
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _formatDuration(position),
+                style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                _formatDuration(duration),
+                style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+

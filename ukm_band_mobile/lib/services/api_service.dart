@@ -48,6 +48,7 @@ class ApiService {
   static const String _localCommentsKey = 'ukm_band_local_comments_v1';
   static const String _localPlaysKey = 'ukm_band_local_plays_v1';
   static const String _localLikesPrefix = 'ukm_band_local_likes_';
+  static const String _localSongsKey = 'ukm_band_local_songs_v1';
   static const List<Map<String, dynamic>> _localSongs = [
     {
       'id': 1,
@@ -67,7 +68,7 @@ class ApiService {
       'description':
           'Sebuah lagu bernuansa intens tentang tekanan, kekacauan, dan rasa tercekik oleh keadaan.',
       'cover_path': 'assets/img/c3.jpg',
-      'file_path': 'assets/songs/Strangled.wav',
+      'file_path': 'assets/songs/Dystopia.wav',
       'plays': 200,
       'likes': 90,
     },
@@ -78,7 +79,7 @@ class ApiService {
       'description':
           'Lagu ini bercerita tentang perjalanan menuju perubahan dan awal yang baru.',
       'cover_path': 'assets/img/c7.jpg',
-      'file_path': 'assets/songs/NewWorld.wav',
+      'file_path': 'assets/songs/The Overtrain.wav',
       'plays': 180,
       'likes': 75,
     },
@@ -89,7 +90,7 @@ class ApiService {
       'description':
           'Lagu ini membawa suasana sendu dan melankolis, seperti langit mendung yang mencerminkan hati.',
       'cover_path': 'assets/img/c6.jpg',
-      'file_path': 'assets/songs/Langit Kelabu.wav',
+      'file_path': 'assets/songs/The Harper.wav',
       'plays': 110,
       'likes': 55,
     },
@@ -100,7 +101,7 @@ class ApiService {
       'description':
           'Sebuah lagu reflektif tentang pencarian jati diri dan proses perubahan dalam hidup.',
       'cover_path': 'assets/img/c2.jpg',
-      'file_path': 'assets/songs/coral_form.wav',
+      'file_path': 'assets/songs/Coral.wav',
       'plays': 85,
       'likes': 30,
     },
@@ -111,7 +112,7 @@ class ApiService {
       'description':
           'Lagu ini menggambarkan perpisahan yang lembut namun penuh makna.',
       'cover_path': 'assets/img/c4.jpg',
-      'file_path': 'assets/songs/revoir.wav',
+      'file_path': 'assets/songs/Elisya.wav',
       'plays': 150,
       'likes': 60,
     },
@@ -199,6 +200,43 @@ class ApiService {
     }
 
     await _request(method: 'POST', path: '/logout');
+  }
+
+  Future<AppUser> updateProfile({
+    required String name,
+    required String email,
+    String? avatarPath,
+  }) async {
+    if (localFirst || _isLocalSession) {
+      return _localUpdateProfile(name: name, email: email, avatarPath: avatarPath);
+    }
+
+    final uri = Uri.parse('$baseUrl/profile');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+    request.headers['Accept'] = 'application/json';
+
+    request.fields['name'] = name;
+    request.fields['email'] = email;
+
+    if (avatarPath != null) {
+      request.files.add(await http.MultipartFile.fromPath('avatar', avatarPath));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = json.decode(response.body);
+      return AppUser.fromJson(data['data'] as Map<String, dynamic>);
+    } else {
+      final decoded = json.decode(response.body);
+      final message = decoded['message'] ?? 'Gagal memperbarui profil';
+      throw ApiException(message, statusCode: response.statusCode);
+    }
   }
 
   Future<List<Song>> fetchSongs({String? query}) async {
@@ -397,6 +435,124 @@ class ApiService {
     await _request(method: 'DELETE', path: '/comments/$commentId');
   }
 
+  Future<Map<String, dynamic>> fetchAdminStats() async {
+    if (localFirst || _isLocalSession) {
+      return _localFetchAdminStats();
+    }
+
+    final data = await _request(method: 'GET', path: '/admin/stats');
+    return data['data'] as Map<String, dynamic>;
+  }
+
+  Future<Song> createSong({
+    required String title,
+    required String artist,
+    required String description,
+    String? coverPath,
+    String? filePath,
+  }) async {
+    if (localFirst || _isLocalSession) {
+      return _localCreateSong(
+        title: title,
+        artist: artist,
+        description: description,
+        coverPath: coverPath,
+        filePath: filePath,
+      );
+    }
+
+    final uri = Uri.parse('$baseUrl/admin/songs');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+    request.headers['Accept'] = 'application/json';
+
+    request.fields['title'] = title;
+    request.fields['artist'] = artist;
+    request.fields['description'] = description;
+
+    if (coverPath != null) {
+      request.files.add(await http.MultipartFile.fromPath('cover', coverPath));
+    }
+    if (filePath != null) {
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = json.decode(response.body);
+      return Song.fromJson(data['data'] as Map<String, dynamic>);
+    } else {
+      final decoded = json.decode(response.body);
+      final message = decoded['message'] ?? 'Gagal mengunggah lagu';
+      throw ApiException(message, statusCode: response.statusCode);
+    }
+  }
+
+  Future<Song> updateSong({
+    required int id,
+    String? title,
+    String? artist,
+    String? description,
+    String? coverPath,
+    String? filePath,
+  }) async {
+    if (localFirst || _isLocalSession) {
+      return _localUpdateSong(
+        id: id,
+        title: title,
+        artist: artist,
+        description: description,
+        coverPath: coverPath,
+        filePath: filePath,
+      );
+    }
+
+    final uri = Uri.parse('$baseUrl/admin/songs/$id');
+    final request = http.MultipartRequest('POST', uri); // Using POST for multipart update
+    
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+    request.headers['Accept'] = 'application/json';
+    request.fields['_method'] = 'PUT';
+
+    if (title != null) request.fields['title'] = title;
+    if (artist != null) request.fields['artist'] = artist;
+    if (description != null) request.fields['description'] = description;
+
+    if (coverPath != null) {
+      request.files.add(await http.MultipartFile.fromPath('cover', coverPath));
+    }
+    if (filePath != null) {
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = json.decode(response.body);
+      return Song.fromJson(data['data'] as Map<String, dynamic>);
+    } else {
+      final decoded = json.decode(response.body);
+      final message = decoded['message'] ?? 'Gagal memperbarui lagu';
+      throw ApiException(message, statusCode: response.statusCode);
+    }
+  }
+
+  Future<void> deleteSong(int id) async {
+    if (localFirst || _isLocalSession) {
+      return _localDeleteSong(id);
+    }
+
+    await _request(method: 'DELETE', path: '/admin/songs/$id');
+  }
+
   bool get _isLocalSession => _token?.startsWith('local:') ?? false;
 
   int get _currentLocalUserId {
@@ -493,6 +649,41 @@ class ApiService {
       orElse: () => throw ApiException('User lokal tidak ditemukan.'),
     );
     return AppUser.fromJson(user);
+  }
+
+  Future<AppUser> _localUpdateProfile({
+    required String name,
+    required String email,
+    String? avatarPath,
+  }) async {
+    await _ensureLocalSeed();
+    final userId = _currentLocalUserId;
+    final users = await _readJsonList(_localUsersKey);
+    final normalizedEmail = email.trim().toLowerCase();
+
+    final emailExists = users.any(
+      (u) => u['id'] != userId && u['email']?.toString().toLowerCase() == normalizedEmail,
+    );
+
+    if (emailExists) {
+      throw ApiException('Email sudah digunakan oleh pengguna lain.');
+    }
+
+    final index = users.indexWhere((item) => item['id'] == userId);
+    if (index == -1) {
+      throw ApiException('User lokal tidak ditemukan.');
+    }
+
+    users[index]['name'] = name.trim();
+    users[index]['email'] = normalizedEmail;
+    
+    // For local mock, we just store the path
+    if (avatarPath != null) {
+      users[index]['avatar_url'] = avatarPath;
+    }
+
+    await _writeJsonList(_localUsersKey, users);
+    return AppUser.fromJson(users[index] as Map<String, dynamic>);
   }
 
   Future<List<Song>> _localFetchSongs({String? query}) async {
@@ -832,17 +1023,96 @@ class ApiService {
     await _writeJsonList(_localCommentsKey, rows);
   }
 
+  Future<Map<String, dynamic>> _localFetchAdminStats() async {
+    await _ensureLocalSeed();
+    final songs = await _localSongPayloads();
+    final users = await _readJsonList(_localUsersKey);
+    
+    int totalPlays = 0;
+    int totalLikes = 0;
+    for (final song in songs) {
+      totalPlays += (song['plays'] as int? ?? 0);
+      totalLikes += (song['likes'] as int? ?? 0);
+    }
+
+    return {
+      'total_listeners': totalPlays,
+      'total_likes': totalLikes,
+      'total_songs': songs.length,
+      'total_users': users.length,
+    };
+  }
+
+  Future<Song> _localCreateSong({
+    required String title,
+    required String artist,
+    required String description,
+    String? coverPath,
+    String? filePath,
+  }) async {
+    await _ensureLocalSeed();
+    final songs = await _readJsonList(_localSongsKey);
+    final id = _nextId(songs);
+    
+    final newSong = {
+      'id': id,
+      'title': title,
+      'artist': artist,
+      'description': description,
+      'cover_path': coverPath ?? 'assets/img/c1.jpg',
+      'file_path': filePath ?? 'assets/songs/Prisoner.wav',
+      'plays': 0,
+      'likes': 0,
+    };
+
+    songs.add(newSong);
+    await _writeJsonList(_localSongsKey, songs);
+    return Song.fromJson(newSong);
+  }
+
+  Future<Song> _localUpdateSong({
+    required int id,
+    String? title,
+    String? artist,
+    String? description,
+    String? coverPath,
+    String? filePath,
+  }) async {
+    await _ensureLocalSeed();
+    final songs = await _readJsonList(_localSongsKey);
+    final index = songs.indexWhere((s) => s['id'] == id);
+    if (index == -1) throw ApiException('Lagu tidak ditemukan.');
+
+    if (title != null) songs[index]['title'] = title;
+    if (artist != null) songs[index]['artist'] = artist;
+    if (description != null) songs[index]['description'] = description;
+    if (coverPath != null) songs[index]['cover_path'] = coverPath;
+    if (filePath != null) songs[index]['file_path'] = filePath;
+
+    await _writeJsonList(_localSongsKey, songs);
+    return Song.fromJson(songs[index]);
+  }
+
+  Future<void> _localDeleteSong(int id) async {
+    await _ensureLocalSeed();
+    final songs = await _readJsonList(_localSongsKey);
+    songs.removeWhere((s) => s['id'] == id);
+    await _writeJsonList(_localSongsKey, songs);
+  }
+
   Future<List<Map<String, dynamic>>> _localSongPayloads() async {
+    await _ensureLocalSeed();
     final likedIds = await _localLikedSongIds();
     final likeCounts = await _localLikeCounts();
     final plays = await _readIntMap(_localPlaysKey);
+    final songs = await _readJsonList(_localSongsKey);
 
-    return _localSongs.map((song) {
+    return songs.map((song) {
       final id = song['id'] as int;
       return {
         ...song,
-        'plays': (song['plays'] as int) + (plays[id] ?? 0),
-        'likes': likeCounts[id] ?? song['likes'],
+        'plays': (song['plays'] as int? ?? 0) + (plays[id] ?? 0),
+        'likes': likeCounts[id] ?? (song['likes'] as int? ?? 0),
         'is_liked': likedIds.contains(id),
       };
     }).toList();
@@ -913,6 +1183,9 @@ class ApiService {
           'role': 'user',
         },
       ]);
+    }
+    if (!prefs.containsKey(_localSongsKey)) {
+      await _writeJsonList(_localSongsKey, _localSongs);
     }
     if (!prefs.containsKey(_localPlaylistsKey)) {
       await _writeJsonList(_localPlaylistsKey, []);

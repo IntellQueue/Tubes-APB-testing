@@ -4,18 +4,21 @@ import 'providers/auth_provider.dart';
 import 'providers/music_provider.dart';
 import 'screens/main_shell.dart';
 import 'screens/welcome_screen.dart';
+import 'theme/app_theme.dart';
 import 'services/api_service.dart';
 import 'providers/audio_provider.dart';
-import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final apiService = ApiService();
+
   runApp(
     MultiProvider(
       providers: [
-        Provider<ApiService>(create: (_) => ApiService()),
+        Provider<ApiService>.value(value: apiService),
         ChangeNotifierProvider<AuthProvider>(
           create: (context) {
-            final authProvider = AuthProvider(context.read<ApiService>());
+            final authProvider = AuthProvider(apiService);
             authProvider.initialize();
             return authProvider;
           },

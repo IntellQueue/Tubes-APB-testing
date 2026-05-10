@@ -260,10 +260,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         ),
                       )
                     else ...[
-                      _LibrarySectionTitle(
+                      const _LibrarySectionTitle(
                         title: 'Playlist Saya',
-                        actionLabel: 'Buat',
-                        onAction: _showCreatePlaylistSheet,
                       ),
                       const SizedBox(height: 12),
                       if (music.playlists.isEmpty)

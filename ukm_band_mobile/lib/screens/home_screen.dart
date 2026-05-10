@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/playlist.dart';
 import '../models/song.dart';
 import '../providers/audio_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/music_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -201,6 +202,15 @@ class _HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    
+    ImageProvider avatar;
+    if (user?.avatarUrl != null) {
+      avatar = NetworkImage(user!.avatarUrl!);
+    } else {
+      avatar = const AssetImage('assets/img/logo.png');
+    }
+
     return Row(
       children: [
         Expanded(
@@ -221,22 +231,26 @@ class _HomeHeader extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(
-          tooltip: 'Profil',
-          onPressed: () {
+        GestureDetector(
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           },
-          icon: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              'assets/img/logo.png',
-              width: 36,
-              height: 36,
-              fit: BoxFit.cover,
-              errorBuilder: (c, e, s) => const Icon(Icons.person_rounded),
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.accentHot.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundImage: avatar,
+              backgroundColor: AppColors.cardSoft,
             ),
           ),
         ),
@@ -316,8 +330,9 @@ class _HeroPanel extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                  Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    spacing: 8,
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -345,7 +360,6 @@ class _HeroPanel extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
                                       const _SignalBars(),
                                     ],
                                   ),
@@ -397,6 +411,10 @@ class _HeroPanel extends StatelessWidget {
                             _InfoChip(
                               icon: Icons.favorite_rounded,
                               label: '${featured.likes} likes',
+                            ),
+                            _InfoChip(
+                              icon: Icons.mode_comment_rounded,
+                              label: '${featured?.commentsCount ?? 0} comments',
                             ),
                             const _InfoChip(
                               icon: Icons.bolt_rounded,
@@ -814,6 +832,15 @@ class _SongCard extends StatelessWidget {
                   Icons.mode_comment_outlined,
                   size: 18,
                   color: AppColors.muted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${song.commentsCount}',
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),

@@ -142,6 +142,72 @@ class MusicProvider with ChangeNotifier {
     return playlist.songs.any((item) => item.id == song.id);
   }
 
+  Future<Map<String, dynamic>> getAdminStats() async {
+    return _apiService.fetchAdminStats();
+  }
+
+  Future<void> addSong({
+    required String title,
+    required String artist,
+    required String description,
+    String? coverPath,
+    String? filePath,
+  }) async {
+    final song = await _apiService.createSong(
+      title: title,
+      artist: artist,
+      description: description,
+      coverPath: coverPath,
+      filePath: filePath,
+    );
+    _songs = [..._songs, song];
+    notifyListeners();
+  }
+
+  Future<void> editSong({
+    required int id,
+    String? title,
+    String? artist,
+    String? description,
+    String? coverPath,
+    String? filePath,
+  }) async {
+    final updated = await _apiService.updateSong(
+      id: id,
+      title: title,
+      artist: artist,
+      description: description,
+      coverPath: coverPath,
+      filePath: filePath,
+    );
+    _replaceSong(updated);
+    notifyListeners();
+  }
+
+  Future<void> removeSong(int id) async {
+    await _apiService.deleteSong(id);
+    _songs = _songs.where((s) => s.id != id).toList();
+    notifyListeners();
+  }
+
+  void incrementCommentCount(int songId) {
+    final song = _findSong(songId);
+    if (song != null) {
+      _replaceSong(song.copyWith(commentsCount: song.commentsCount + 1));
+      notifyListeners();
+    }
+  }
+
+  void decrementCommentCount(int songId) {
+    final song = _findSong(songId);
+    if (song != null) {
+      _replaceSong(song.copyWith(
+        commentsCount: (song.commentsCount - 1).clamp(0, 1 << 31).toInt(),
+      ));
+      notifyListeners();
+    }
+  }
+
   Song? _findSong(int songId) {
     for (final song in _songs) {
       if (song.id == songId) {

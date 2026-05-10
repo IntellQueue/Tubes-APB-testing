@@ -37,7 +37,12 @@ class _MainShellState extends State<MainShell> {
 
   void _openCurrentSong(Song song) {
     Navigator.of(context).push(
-      songDetailRoute(song: song, queue: context.read<AudioProvider>().queue),
+      MaterialPageRoute(
+        builder: (_) => SongDetailScreen(
+          song: song,
+          queue: context.read<AudioProvider>().queue,
+        ),
+      ),
     );
   }
 

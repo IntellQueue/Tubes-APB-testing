@@ -23,7 +23,28 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'avatar',
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['avatar_url'];
+
+    /**
+     * Get the user's avatar URL.
+     *
+     * @return string|null
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar) {
+            return url('storage/' . $this->avatar);
+        }
+        return null;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

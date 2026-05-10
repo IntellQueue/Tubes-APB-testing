@@ -10,6 +10,7 @@ class Song {
   final String? streamUrl;
   final int plays;
   final int likes;
+  final int commentsCount;
   final bool isLiked;
 
   Song({
@@ -24,6 +25,7 @@ class Song {
     this.streamUrl,
     required this.plays,
     required this.likes,
+    this.commentsCount = 0,
     this.isLiked = false,
   });
 
@@ -40,6 +42,7 @@ class Song {
       streamUrl: json['stream_url'],
       plays: json['plays'] ?? 0,
       likes: json['likes'] ?? 0,
+      commentsCount: json['comments_count'] ?? 0,
       isLiked: json['is_liked'] ?? false,
     );
   }
@@ -80,7 +83,7 @@ class Song {
 
   bool get isRemoteCover => displayCover.startsWith('http');
 
-  Song copyWith({int? plays, int? likes, bool? isLiked}) {
+  Song copyWith({int? plays, int? likes, int? commentsCount, bool? isLiked}) {
     return Song(
       id: id,
       title: title,
@@ -93,6 +96,7 @@ class Song {
       streamUrl: streamUrl,
       plays: plays ?? this.plays,
       likes: likes ?? this.likes,
+      commentsCount: commentsCount ?? this.commentsCount,
       isLiked: isLiked ?? this.isLiked,
     );
   }

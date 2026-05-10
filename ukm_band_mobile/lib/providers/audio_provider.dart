@@ -84,6 +84,8 @@ class AudioProvider with ChangeNotifier {
     _playbackError = null;
     notifyListeners();
 
+    debugPrint('Memutar lagu: ${song.title} (ID: ${song.id})');
+
     final candidates = song.playbackCandidates.isNotEmpty
         ? song.playbackCandidates
         : [song.playbackUrl];
