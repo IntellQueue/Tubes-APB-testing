@@ -88,7 +88,7 @@ class AdminDashboardScreen extends StatelessWidget {
                         crossAxisCount: 2,
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
-                        mainAxisExtent: 130,
+                        mainAxisExtent: 150,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -181,7 +181,7 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 28),
-          const Spacer(),
+          const SizedBox(height: 12),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
