@@ -243,14 +243,22 @@ class _SongManageTile extends StatelessWidget {
             ),
           ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 onPressed: onEdit,
+                iconSize: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
                 icon: const Icon(Icons.edit_rounded, color: Colors.blueAccent),
                 tooltip: 'Edit',
               ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: onDelete,
+                iconSize: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
                 icon: const Icon(Icons.delete_rounded, color: AppColors.accentHot),
                 tooltip: 'Hapus',
               ),
