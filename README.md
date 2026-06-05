@@ -57,11 +57,11 @@ Menjalankan mobile app dengan Firebase:
 ```bash
 cd ukm_band_mobile
 flutter run ^
-  --dart-define=USE_FIREBASE=true ^
-  --dart-define=FIREBASE_API_KEY=your-api-key ^
-  --dart-define=FIREBASE_APP_ID=your-app-id ^
-  --dart-define=FIREBASE_MESSAGING_SENDER_ID=your-sender-id ^
-  --dart-define=FIREBASE_PROJECT_ID=your-project-id
+   --dart-define=USE_FIREBASE=true ^
+   --dart-define=FIREBASE_API_KEY=your-api-key ^
+   --dart-define=FIREBASE_APP_ID=your-app-id ^
+   --dart-define=FIREBASE_MESSAGING_SENDER_ID=your-sender-id ^
+   --dart-define=FIREBASE_PROJECT_ID=your-project-id
 ```
 
 Dokumentasi lengkap: [`ukm_band_mobile/docs/firebase.md`](ukm_band_mobile/docs/firebase.md)
