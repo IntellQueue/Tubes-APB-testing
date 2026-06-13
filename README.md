@@ -331,4 +331,4 @@ classDiagram
 
 ---
 
-Dibuat oleh Kelompok 2 Pemrograman Web (WebPro), Pemrograman Berorientasi Objek (PBO) untuk Tugas Besar Aplikasi Perangkat Bergerak (APB).
+Dibuat oleh Kelompok 2 Pemrograman Web (WebPro), Pemrograman Berorientasi Objek (PBO) untuk Tugas Besar Aplikasi Perangkat Bergerak (APB). test sinkron
